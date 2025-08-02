@@ -1,0 +1,26 @@
+name: Build with MSVC
+
+on:
+  push:
+    paths:
+      - '**.cpp'
+      - '.github/workflows/windows-build.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Compile clipboard.cpp to xclip.exe
+        run: cl /O2 /Fe:xclip.exe clipboard.cpp
+
+      - name: Upload executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: xclip-exe
+          path: xclip.exe
