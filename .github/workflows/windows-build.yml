@@ -16,11 +16,11 @@ jobs:
       - name: Set up MSVC
         uses: ilammy/msvc-dev-cmd@v1
 
-      - name: Compile clipboard.cpp to xclip.exe
-        run: cl /O2 /Fe:xclip.exe clipboard.cpp
+      - name: Compile clipboard.cpp
+        run: cl /O2 /Oi /GL /Gy /EHsc /DNDEBUG clipboard.cpp /link /LTCG /OPT:REF /OPT:ICF User32.lib
 
       - name: Upload executable
         uses: actions/upload-artifact@v4
         with:
-          name: xclip-exe
-          path: xclip.exe
+          name: clipboard.exe
+          path: clipboard.exe
