@@ -8,8 +8,6 @@ static const char* CLIP_FMT_NAME = "XCLIP_RAW";
 int main(int argc, char* argv[])
 {
     int output = (argc == 2 && std::strcmp(argv[1], "-o") == 0);
-    _setmode(_fileno(stdin),  _O_BINARY);
-    _setmode(_fileno(stdout), _O_BINARY);
 
     if (output) {
         if (!OpenClipboard(NULL)) return 1;
@@ -23,24 +21,31 @@ int main(int argc, char* argv[])
 
         void* ptr = GlobalLock(hData);
         SIZE_T size = GlobalSize(hData);
-        fwrite(ptr, 1, size, stdout);
-        fflush(stdout);
+
+        DWORD written = 0;
+        HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
+        WriteFile(hStdout, ptr, (DWORD)size, &written, NULL);
+
         GlobalUnlock(hData);
         CloseClipboard();
         return 0;
     } else {
+        HANDLE hStdin = GetStdHandle(STD_INPUT_HANDLE);
         char* buf = NULL;
         size_t bufsize = 0, total = 0;
+        DWORD n;
+
         while (1) {
             if (total + 4096 > bufsize) {
                 bufsize = bufsize ? bufsize * 2 : 4096;
                 buf = (char*)realloc(buf, bufsize);
                 if (!buf) return 1;
             }
-            size_t n = fread(buf + total, 1, 4096, stdin);
-            if (n == 0) break;
+            if (!ReadFile(hStdin, buf + total, 4096, &n, NULL) || n == 0)
+                break;
             total += n;
         }
+
         if (total == 0) { free(buf); return 0; }
 
         if (!OpenClipboard(NULL)) { free(buf); return 1; }
